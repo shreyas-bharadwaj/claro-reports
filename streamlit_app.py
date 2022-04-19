@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from datetime import timedelta
 
 st.set_page_config(layout='wide')
 patient = pd.read_csv("./data/patient.csv")
@@ -231,4 +232,53 @@ ax.bar_label(ax.containers[0], label_type='center')
 ax.bar_label(ax.containers[1], label_type='center')
 st.pyplot(fig)
 
+with st.container():
+    st.header("MOUD Status By Clinic") 
+    chart9c = contact_note[['Patient ID','Medication for OUD - Name','Medication for OUD - Days Prescribed','Medication for OUD - Number of Refills','Medication for OUD - Frequency','Contact Date','Contact Type']]
+    chart9c = chart9c[chart9c['Contact Type'].isin(['X/X','P/E'])]
+    chart9c['Days of Med']  = (chart9c['Medication for OUD - Days Prescribed'] * chart9c['Medication for OUD - Number of Refills'])+chart9c['Medication for OUD - Days Prescribed']
+    def genMedStatus(df):
+        df['Today'] = pd.to_datetime('today').date()
+        df['Today'] = df['Today'].astype('datetime64')
+        df['Days of Med'] = df['Days of Med'].fillna(value=0)
+        df['Contact Date'] = df['Contact Date'].astype('datetime64')
+        for index, row in df.iterrows():
+            df.loc[index,'Run out Date'] = df.loc[index,'Contact Date'] + timedelta(days=df.loc[index,'Days of Med'])
+            if df.loc[index,'Medication for OUD - Name']=='Methadone':
+                df.loc[index,'Med Status'] = 'Methadone'
+            elif df.loc[index,'Run out Date'] < df.loc[index,'Today']:
+                df.loc[index, 'Med Status'] = 'Flagged for CC Review'
+            elif df.loc[index, 'Run out Date'] >= df.loc[index,'Today']:
+                df.loc[index,'Med Status'] = 'Active'
+            else:
+                df.loc[index,'Med Status'] = 'Unknown'
+        return df
+    x = genMedStatus(chart9c)
+    x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
 
+    p = patient[['Patient ID','Currently Active','Current Primary Clinic']]
+    p = p[(p['Currently Active']==1) & (p['Current Primary Clinic'].isin(clinics))]
+
+    merger1=pd.merge(p,x,on='Patient ID',how='inner')
+
+
+    y = episode[['Patient ID','Last MOUD Prescriber Encounter Date', 'Organization Name']]
+    y['Last MOUD Prescriber Encounter Date'] = y['Last MOUD Prescriber Encounter Date'].fillna(value=0)
+    y = y[y['Last MOUD Prescriber Encounter Date']==0]
+    y = y[y['Organization Name']==site_name]
+    y['Med Status'] = 'Not Started'
+    merger = pd.merge(p,y,on='Patient ID', how='inner')
+    concat = pd.concat((merger1,merger))
+    # x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
+    # z = patient[['Patient ID','Currently Active','Current Primary Clinic']]
+    # z = z[(z['Currently Active']==1) & (z['Current Primary Clinic'].isin(clinics))]
+    # active = pd.merge(x,z,on='Patient ID', how='inner')
+    # final = pd.merge(active,y,on=['Patient ID','Med Status'], how='outer')
+    concat = concat[['Patient ID','Current Primary Clinic','Med Status']].reset_index()
+    concat = concat.drop(columns='index')
+    final = concat.groupby(['Current Primary Clinic','Med Status'])['Patient ID'].count().reset_index()
+    final2 = final.pivot_table(index='Current Primary Clinic', columns='Med Status').fillna(value=0)
+    final2.columns = final2.columns.to_flat_index().str.join('_')
+    final2 = final2.rename(columns={'Patient ID_Active':'Active', 'Patient ID_Not Started':'Not Started','Patient ID_Flagged for CC Review':'Flagged for CC Review','Patient ID_Methadone':'Methadone'})
+    final2 = final2[['Active','Flagged for CC Review','Methadone','Not Started']]
+    st.bar_chart(final2, height=450)
