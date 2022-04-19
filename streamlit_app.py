@@ -282,3 +282,68 @@ with st.container():
     final2 = final2.rename(columns={'Patient ID_Active':'Active', 'Patient ID_Not Started':'Not Started','Patient ID_Flagged for CC Review':'Flagged for CC Review','Patient ID_Methadone':'Methadone'})
     final2 = final2[['Active','Flagged for CC Review','Methadone','Not Started']]
     st.bar_chart(final2, height=450)
+
+    #chart10: caseload by MOUD Status (Active, Methadone, Flagged for CC Review, Not Started)
+# SELECT "Contact Note Contact Note"."Patient_ID" AS "Patient ID",
+#        "Contact Note Contact Note"."Medication_for_OUD_Name" AS "Medication For OUD Name",
+#        "Contact Note Contact Note"."Medication_for_OUD_Days_Prescribed" AS "Medication For OUD Days Prescribed",
+#        "Contact Note Contact Note"."Medication_for_OUD_Number_of_Refills" AS "Medication For OUD Number Of Refills",
+#        "Contact Note Contact Note"."Medication_for_OUD_Frequency" AS "Medication For OUD Frequency",
+#        MAX("Contact Note Contact Note"."Contact_Date") AS "Maximum Contact Date"
+# FROM "GoogleSheets"."Contact_Note_Contact_Note" AS "Contact Note Contact Note"
+# WHERE (("Contact Note Contact Note"."Contact_Type" = 'X/X'))
+#   OR ("Contact Note Contact Note"."Contact_Type" = 'P/E')
+
+# "(\"Medication For OUD Days Prescribed\"*\"Medication For OUD Number Of Refills\")+\"Medication For OUD Days Prescribed\"
+
+#dateadd(\"Maximum Contact Date\", \"Days of Medication Prescribed\", 'day')
+#new_name": "Run Out Date"
+#datediff(\"Today\",\"Run Out Date\",'day')"
+#"case when \"Medication For OUD Name\" is \"Methadone\" then \"Methadone\" when \"Custom Formula\"<0 then \"Overdue\" else \"Active\" end",
+
+chart10c = contact_note[['Patient ID','Contact Date','Contact Type']]
+chart10c = chart10c[chart10c['Contact Type'].isin(['B/P'])]
+def genBHP(df):
+    df['Today'] = pd.to_datetime('today').date()
+    df['Today'] = df['Today'].astype('datetime64')
+    df['Contact Date'] = df['Contact Date'].astype('datetime64')
+    for index, row in df.iterrows():
+        df.loc[index,'Days Since BHP'] = (df.loc[index,'Today'] - df.loc[index,'Contact Date']).days
+        if df.loc[index,'Days Since BHP']<=31:
+            df.loc[index,'BHP Status'] = 'Last 30 Days'
+        else:
+            df.loc[index,'BHP Status'] = 'Any'
+    return df
+x = genBHP(chart10c)
+x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
+
+p = patient[['Patient ID','Currently Active','Current Primary Clinic']]
+p = p[(p['Currently Active']==1) & (p['Current Primary Clinic'].isin(clinics))]
+
+merger1=pd.merge(p,x,on='Patient ID',how='inner')
+
+
+y = episode[['Patient ID','Last BH Provider Encounter Date', 'Organization Name']]
+y['Last BH Provider Encounter Date'] = y['Last BH Provider Encounter Date'].fillna(value=0)
+y = y[y['Last BH Provider Encounter Date']==0]
+y = y[y['Organization Name']==site_name]
+
+y['BHP Status'] = 'None'
+
+merger = pd.merge(p,y,on='Patient ID', how='inner')
+
+concat = pd.concat((merger1,merger))
+
+# x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
+# z = patient[['Patient ID','Currently Active','Current Primary Clinic']]
+# z = z[(z['Currently Active']==1) & (z['Current Primary Clinic'].isin(clinics))]
+# active = pd.merge(x,z,on='Patient ID', how='inner')
+
+# final = pd.merge(active,y,on=['Patient ID','Med Status'], how='outer')
+concat = concat[['Patient ID','Current Primary Clinic','BHP Status']].reset_index()
+concat = concat.drop(columns='index')
+final = concat.groupby(['Current Primary Clinic','BHP Status'])['Patient ID'].count().reset_index()
+final2 = final.pivot_table(index='Current Primary Clinic', columns='BHP Status').fillna(value=0)
+final2.columns = final2.columns.to_flat_index().str.join('_')
+final2 = final2.rename(columns={'Patient ID_Any':'Any', 'Patient ID_Last 30 Days':'Last 30 Days','Patient ID_None':'None'})
+st.bar_chart(final2, height=450)
