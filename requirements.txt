@@ -4,7 +4,4 @@ streamlit
 matplotlib
 seaborn
 datetime
-<<<<<<< HEAD
 numpy
-=======
->>>>>>> e5a9a417068808ce4700c388d81c66b0e2c4ecdb
