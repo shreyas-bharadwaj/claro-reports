@@ -15,7 +15,7 @@ option = st.selectbox('Select an Organization', episode[~episode['Organization N
 site_name = option
 clinics = episode[episode['Organization Name']==site_name]['Clinic Name'].unique()
 st.header("CLARO Site Report | Version 2.0") 
-st.subheader("data current as of {}".format('April 18th, 2022'))
+st.subheader("data current as of {}".format(pd.to_datetime('today').date()))
 
 with st.container():
     col1, col2 = st.columns(2)
@@ -303,7 +303,7 @@ with st.container():
         chart6['delta'] = (chart6['Contact Date'] - chart6['Randomization Date']).dt.days
         chart6 = pd.DataFrame(chart6.groupby('Patient Clinic Names')['delta'].median()).reset_index()
         fig, ax = plt.subplots() #solved by add this line 
-        ax = sns.barplot(data=chart6, x='delta', y='Patient Clinic Names', orient='h')
+        ax = sns.barplot(data=chart6, x='delta', y='Patient Clinic Names', orient='h')(14)
         plt.title("Median Days to First BHP Visit by Clinic")
         plt.xlabel("# Days (median)")
         plt.ylabel("Clinic")
