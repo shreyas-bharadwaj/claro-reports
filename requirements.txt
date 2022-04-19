@@ -1,7 +1,6 @@
 altair
 pandas
 streamlit
-matplotlib.pyplot
 matplotlib
 seaborn
 datetime
