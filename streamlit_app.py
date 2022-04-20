@@ -303,7 +303,7 @@ with st.container():
         chart6['delta'] = (chart6['Contact Date'] - chart6['Randomization Date']).dt.days
         chart6 = pd.DataFrame(chart6.groupby('Patient Clinic Names')['delta'].median()).reset_index()
         fig, ax = plt.subplots() #solved by add this line 
-        ax = sns.barplot(data=chart6, x='delta', y='Patient Clinic Names', orient='h')(14)
+        ax = sns.barplot(data=chart6, x='delta', y='Patient Clinic Names', orient='h')
         plt.title("Median Days to First BHP Visit by Clinic")
         plt.xlabel("# Days (median)")
         plt.ylabel("Clinic")
