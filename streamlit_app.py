@@ -166,7 +166,7 @@ with st.container():
         chart7 = chart7.pivot(index='Current Primary Clinic', columns='Engagement Status').fillna(value=0)
         chart7plot = chart7.copy()
         chart7plot.columns = chart7plot.columns.to_flat_index().str.join('_')
-        chart7plot = chart7plot.rename(columns={'Patient ID_Difficult To Engage':'Unable to Make Initial Contact', 'Patient ID_Engaged':'Engaged','Patient ID_Not Engaged':'Not Engaged', 'Patient ID_Recently Enrolled':'Recently Enrolled'})
+        chart7plot = chart7plot.rename(columns={'Patient ID_Difficult to Engage':'Unable to Make Initial Contact', 'Patient ID_Engaged':'Engaged','Patient ID_Not Engaged':'Not Engaged', 'Patient ID_Recently Enrolled':'Recently Enrolled'})
         st.bar_chart(chart7plot, height=400)
     with cole2:
         #chart 8: days since last CC Visit
