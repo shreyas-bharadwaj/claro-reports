@@ -255,15 +255,8 @@ with st.container():
         y=alt.Y('Current Primary Clinic'),
         color=alt.Color('Med Status')
         )
-
-    text = alt.Chart(final).mark_text(dx=-15, dy=3,color='white').encode(
-        x=alt.X('Patient ID'),
-        y=alt.Y('Current Primary Clinic'),
-        color=alt.Color('Med Status', legend=None, scale=alt.Scale(range=['white'])),
-        text=alt.Text('Patient ID')
-        )
     
-    st.altair_chart(alt.layer(bars, text, data=final).resolve_scale(color='independent').properties(height=525), use_container_width=True)
+    st.altair_chart(alt.layer(bars, data=final).resolve_scale(color='independent').properties(height=525), use_container_width=True)
 
 with st.container():
     st.header("Psychotropic Medication Status") 
