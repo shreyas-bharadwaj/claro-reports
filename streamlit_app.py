@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from datetime import timedelta
+import altair as alt
 
 st.set_page_config(layout='wide')
 patient = pd.read_csv("./data/patient.csv")
@@ -244,12 +245,84 @@ with st.container():
     concat = concat[['Patient ID','Current Primary Clinic','Med Status']].reset_index()
     concat = concat.drop(columns='index')
     final = concat.groupby(['Current Primary Clinic','Med Status'])['Patient ID'].count().reset_index()
-    final2 = final.pivot_table(index='Current Primary Clinic', columns='Med Status').fillna(value=0)
-    final2.columns = final2.columns.to_flat_index().str.join('_')
-    final2 = final2.rename(columns={'Patient ID_Active':'Active', 'Patient ID_Not Started':'Not Started','Patient ID_Flagged for CC Review':'Flagged for CC Review','Patient ID_Methadone':'Methadone'})
-    final2 = final2[['Active','Flagged for CC Review','Methadone','Not Started']]
-    st.bar_chart(final2, height=450)
+    # final2 = final.pivot_table(index='Current Primary Clinic', columns='Med Status').fillna(value=0)
+    # final2.columns = final2.columns.to_flat_index().str.join('_')
+    # final2 = final2.rename(columns={'Patient ID_Active':'Active', 'Patient ID_Not Started':'Not Started','Patient ID_Flagged for CC Review':'Flagged for CC Review','Patient ID_Methadone':'Methadone'})
+    # final2 = final2[['Active','Flagged for CC Review','Methadone','Not Started']]
+    #st.bar_chart(final2, height=450)
+    bars = alt.Chart(final).mark_bar().encode(
+        x=alt.X('Patient ID'),
+        y=alt.Y('Current Primary Clinic'),
+        color=alt.Color('Med Status')
+        )
 
+    text = alt.Chart(final).mark_text(dx=-15, dy=3,color='white').encode(
+        x=alt.X('Patient ID'),
+        y=alt.Y('Current Primary Clinic'),
+        color=alt.Color('Med Status', legend=None, scale=alt.Scale(range=['white'])),
+        text=alt.Text('Patient ID')
+        )
+    
+    st.altair_chart(alt.layer(bars, text, data=final).resolve_scale(color='independent').properties(height=525), use_container_width=True)
+
+with st.container():
+    st.header("Psychotropic Medication Status") 
+    col1, col2 = st.columns(2)
+    chart11c = contact_note[['Patient ID','Contact Date','Contact Type', 'Current Medication 1', 'Current Medication 2']]
+    chart11c = chart11c[chart11c['Contact Type'].isin(['I/A','F/U'])]
+    chart11c['Contact Date'] = chart11c['Contact Date'].astype('datetime64')
+    x = chart11c
+    x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
+
+    p = patient[['Patient ID','Currently Active','Current Primary Clinic']]
+    p = p[(p['Currently Active']==1) & (p['Current Primary Clinic'].isin(clinics))]
+
+    merger1=pd.merge(p,x,on='Patient ID',how='inner')
+
+    y = episode[['Patient ID','Historic Diagnosis - Depression','Historic Diagnosis - PTSD', 'Organization Name']]
+    y = y[y['Organization Name']==site_name]
+
+    merger = pd.merge(merger1,y,on='Patient ID', how='inner')
+
+    def genMaint(df):
+        df = df.fillna(value=0)
+        for index, row in df.iterrows():
+            if df.loc[index,'Current Medication 1'] != 0:
+                df.loc[index,'Med Status']='Maintained'
+            else:
+                df.loc[index, 'Med Status']='Not Maintained'
+        df['MDD'] = df['Historic Diagnosis - Depression'].apply(lambda x: 'MDD' if x==1 else np.nan)
+        df['PTSD'] = df['Historic Diagnosis - PTSD'].apply(lambda x: 'PTSD' if x==1 else np.nan)
+        return df
+
+    working_df = genMaint(merger)
+
+    final_ptsd = working_df.groupby(['Current Primary Clinic','Med Status','PTSD'])['Patient ID'].count().reset_index()
+
+    final_mdd = working_df.groupby(['Current Primary Clinic','Med Status','MDD'])['Patient ID'].count().reset_index()
+
+    bars_mdd = alt.Chart(final_mdd).mark_bar().encode(
+    x=alt.X('Patient ID', stack="normalize", axis=alt.Axis(format='%')),
+    y='Current Primary Clinic',
+    color='Med Status'
+    )
+
+    bars_ptsd = alt.Chart(final_ptsd).mark_bar().encode(
+    x=alt.X('Patient ID', stack="normalize", axis=alt.Axis(format='%')),
+    y='Current Primary Clinic',
+    color='Med Status'
+    )
+    
+    with col1:
+        st.subheader("Proportion of MDD Patients by MH Rx Status")
+        st.altair_chart((bars_mdd).properties(height=300),use_container_width=True)
+    with col2:
+        st.subheader("Proportion of PTSD Patients by MH Rx Status")
+        st.altair_chart((bars_ptsd).properties(height=300),use_container_width=True)
+
+
+# final = merger.groupby(['Current Primary Clinic','Historic Diagnosis - Depression'])['Patient ID'].count().reset_index()
+# final
 with st.container():
     st.header("Psychotherapy Status By Clinic") 
     col3, col4 = st.columns(2)
@@ -282,10 +355,27 @@ with st.container():
         concat = concat[['Patient ID','Current Primary Clinic','BHP Status']].reset_index()
         concat = concat.drop(columns='index')
         final = concat.groupby(['Current Primary Clinic','BHP Status'])['Patient ID'].count().reset_index()
-        final2 = final.pivot_table(index='Current Primary Clinic', columns='BHP Status').fillna(value=0)
-        final2.columns = final2.columns.to_flat_index().str.join('_')
-        final2 = final2.rename(columns={'Patient ID_Any':'Any', 'Patient ID_Last 30 Days':'Last 30 Days','Patient ID_None':'None'})
-        st.bar_chart(final2, height=425)
+        # final2 = final.pivot_table(index='Current Primary Clinic', columns='BHP Status').fillna(value=0)
+        # final2.columns = final2.columns.to_flat_index().str.join('_')
+        # final2 = final2.rename(columns={'Patient ID_Any':'Any', 'Patient ID_Last 30 Days':'Last 30 Days','Patient ID_None':'None'})
+        #st.bar_chart(final2, height=425)
+        bars = alt.Chart(final).mark_bar().encode(
+        x=alt.Y('Patient ID'),
+        y=alt.X('Current Primary Clinic'),
+        color=alt.Color('BHP Status')
+        )
+
+        text = alt.Chart(final).mark_text(dx=-10, dy=10, color='white').encode(
+        x=alt.Y('Patient ID'),
+        y=alt.X('Current Primary Clinic'),
+        detail='BHP Status',
+        text=alt.Text('Patient ID', format='.1f')
+        )
+        st.altair_chart((bars+text).properties(
+    height=525
+), use_container_width=True)
+
+
 
     with col4:
             #chart 6 median days to first bhp visit by clinic
