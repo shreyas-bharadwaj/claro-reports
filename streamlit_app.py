@@ -61,11 +61,9 @@ with st.container():
 
     #second chart patient count by Clinic Name
     with col2:
-        chart1 = patient[['Patient ID', 'Current Primary Clinic', 'Currently Active']]
-        chart1 = chart1[chart1['Currently Active']==1]
-        merge = episode[['Patient ID', 'Organization Name']]
-        merge = merge[merge['Organization Name']==site_name]
-        merge = pd.merge(chart1, merge, how='inner', on='Patient ID')
+        chart1 = patient[['Patient ID', 'Current Care Coordinator', 'Currently Active', 'Current Primary Clinic']]
+        chart1 = chart1[(chart1['Currently Active']==1) & (chart1['Current Primary Clinic'].isin(clinics))]
+        merge = chart1
         chart1 = pd.DataFrame(merge.groupby('Current Primary Clinic')['Patient ID'].count()).reset_index()
         chart1 = chart1.sort_values(by='Patient ID', ascending=False)
         fig, ax = plt.subplots() #solved by add this line 
