@@ -10,6 +10,8 @@ st.set_page_config(layout='wide')
 patient = pd.read_csv("./data/patient.csv")
 episode = pd.read_csv("./data/episode.csv")
 contact_note = pd.read_csv("./data/contact_note.csv")
+agencies = pd.read_csv('./data/agencies.csv')
+
 #selector
 option = st.selectbox('Select an Organization', episode[~episode['Organization Name'].isin(['Hidalgo Medical Services', 'University of New Mexico (Non-current)'])]['Organization Name'].unique())
 
@@ -327,12 +329,13 @@ with st.container():
     st.header("Psychotherapy Status By Clinic") 
     col3, col4 = st.columns(2)
     with col3:
-        chart10c = contact_note[['Patient ID','Contact Date','Contact Type']]
+        chart10c = contact_note[['Patient ID','Contact Date','Contact Type','Provider Name']]
         chart10c = chart10c[chart10c['Contact Type'].isin(['B/P'])]
         def genBHP(df):
             df['Today'] = pd.to_datetime('today').date()
             df['Today'] = df['Today'].astype('datetime64')
             df['Contact Date'] = df['Contact Date'].astype('datetime64')
+            df['BHP Status'] = df['Provider Name'].apply(lambda x: 'Healthy Families' if 'healthy' in str(x).lower() else x)
             for index, row in df.iterrows():
                 df.loc[index,'Days Since BHP'] = (df.loc[index,'Today'] - df.loc[index,'Contact Date']).days
                 if df.loc[index,'Days Since BHP']<=31:
@@ -342,19 +345,51 @@ with st.container():
             return df
         x = genBHP(chart10c)
         x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
+
         p = patient[['Patient ID','Currently Active','Current Primary Clinic']]
-        p = p[(p['Currently Active']==1) & (p['Current Primary Clinic'].isin(clinics))]
-        merger1=pd.merge(p,x,on='Patient ID',how='inner')
+        p = p[(p['Currently Active']==1) & (p['Current Primary Clinic'].isin(clinics))].reset_index()
+
+        merger1=pd.merge(p,x,on='Patient ID', how='inner')
+
+
         y = episode[['Patient ID','Last BH Provider Encounter Date', 'Organization Name']]
         y['Last BH Provider Encounter Date'] = y['Last BH Provider Encounter Date'].fillna(value=0)
         y = y[y['Last BH Provider Encounter Date']==0]
         y = y[y['Organization Name']==site_name]
+
         y['BHP Status'] = 'None'
+
         merger = pd.merge(p,y,on='Patient ID', how='inner')
+
+        a = agencies[['Patient ID','Purpose','Agency Name and Contact Info']]
+        merge2 = pd.merge(p, a,on='Patient ID', how='left')
+        merge2['Other MH Tx'] = merge2['Purpose'].apply(lambda x: "Other MH Tx" if x == 1 or x ==2 else 'None')
+        merge2 = merge2[merge2['Other MH Tx']=='Other MH Tx'].drop_duplicates(subset='Patient ID')
+
+
         concat = pd.concat((merger1,merger))
-        concat = concat[['Patient ID','Current Primary Clinic','BHP Status']].reset_index()
+
+        test = pd.merge(concat, merge2, on='Patient ID', how='left').reset_index()
+
+        def otherMhTx(df):
+            for index, row in df.iterrows():
+                if df.loc[index, 'BHP Status']=='None' and df.loc[index, 'Other MH Tx']=='Other MH Tx':
+                    df.loc[index,'BHP Status'] = 'Other MH Tx'
+            return df
+
+        concat = otherMhTx(test)
+
+        # x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
+        # z = patient[['Patient ID','Currently Active','Current Primary Clinic']]
+        # z = z[(z['Currently Active']==1) & (z['Current Primary Clinic'].isin(clinics))]
+        # active = pd.merge(x,z,on='Patient ID', how='inner')
+
+        # final = pd.merge(active,y,on=['Patient ID','Med Status'], how='outer')
+        concat = concat[['Patient ID','Current Primary Clinic_x','BHP Status']].reset_index()
         concat = concat.drop(columns='index')
-        final = concat.groupby(['Current Primary Clinic','BHP Status'])['Patient ID'].count().reset_index()
+        concat = concat.drop_duplicates(subset='Patient ID')
+        final = concat.groupby(['Current Primary Clinic_x','BHP Status'])['Patient ID'].count().reset_index()
+        final = final.rename(columns={'Current Primary Clinic_x':'Current Primary Clinic'})
         # final2 = final.pivot_table(index='Current Primary Clinic', columns='BHP Status').fillna(value=0)
         # final2.columns = final2.columns.to_flat_index().str.join('_')
         # final2 = final2.rename(columns={'Patient ID_Any':'Any', 'Patient ID_Last 30 Days':'Last 30 Days','Patient ID_None':'None'})
@@ -365,13 +400,7 @@ with st.container():
         color=alt.Color('BHP Status')
         )
 
-        text = alt.Chart(final).mark_text(dx=-10, dy=10, color='white').encode(
-        x=alt.Y('Patient ID'),
-        y=alt.X('Current Primary Clinic'),
-        detail='BHP Status',
-        text=alt.Text('Patient ID', format='.1f')
-        )
-        st.altair_chart((bars+text).properties(
+        st.altair_chart((bars).properties(
     height=525
 ), use_container_width=True)
 
