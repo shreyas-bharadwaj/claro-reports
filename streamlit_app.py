@@ -206,7 +206,7 @@ with st.container():
         plt.xlabel("# Days (median)")
         plt.ylabel("Clinic")
         ax.bar_label(ax.containers[0], label_type='center')
-        ax.bar_label(ax.containers[1], label_type='center')
+        # ax.bar_label(ax.containers[1], label_type='center')
         st.pyplot(fig)
 
 with st.container():
