@@ -114,7 +114,7 @@ with st.container():
             ax.bar_label(ax.containers[0], label_type='center')
             st.pyplot(fig)
         except:
-            st.write("No data for this chart")
+            st.write("No data for 'Number of Patients Who Had an Initiation Visit Within the Last 30 Days', chart unable to render")
 
 
 
