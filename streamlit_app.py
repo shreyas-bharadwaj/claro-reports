@@ -96,22 +96,25 @@ with st.container():
         st.pyplot(fig)
 
         #chart 5: number of patients who had an intiation visit within the last 30 days
-        chart5 = contact_note[['Patient ID', 'Contact Type', 'Contact Date', 'Patient Clinic Names', 'Provider Organization Names']]
-        chart5['Contact Date'] = chart5['Contact Date'].astype('datetime64')
-        chart5=chart5[chart5['Contact Type']=='I/A']
-        chart5['30 Days Ago'] = pd.to_datetime('today').date()-pd.Timedelta(days=31)
-        chart5 = chart5[chart5['Provider Organization Names']==site_name]
-        chart5= chart5[chart5['Contact Date']>=chart5['30 Days Ago']]
-        chart5 = chart5[['Patient Clinic Names', 'Patient ID']].groupby('Patient Clinic Names').nunique().reset_index()
-        fig, ax = plt.subplots() #solved by add this line 
-        ax = sns.barplot(data=chart5, x='Patient ID', y='Patient Clinic Names', orient='h')
-        ticks = np.arange(0, chart5['Patient ID'].max()+1, 1).tolist()
-        plt.title("# Patients w/ Initial Visit in Last 30 Days by Clinic")
-        plt.xlabel("# Patients")
-        plt.ylabel("Clinic")
-        plt.xticks(ticks)
-        ax.bar_label(ax.containers[0], label_type='center')
-        st.pyplot(fig)
+        try:
+            chart5 = contact_note[['Patient ID', 'Contact Type', 'Contact Date', 'Patient Clinic Names', 'Provider Organization Names']]
+            chart5['Contact Date'] = chart5['Contact Date'].astype('datetime64')
+            chart5=chart5[chart5['Contact Type']=='I/A']
+            chart5['30 Days Ago'] = pd.to_datetime('today').date()-pd.Timedelta(days=31)
+            chart5 = chart5[chart5['Provider Organization Names']==site_name]
+            chart5= chart5[chart5['Contact Date']>=chart5['30 Days Ago']]
+            chart5 = chart5[['Patient Clinic Names', 'Patient ID']].groupby('Patient Clinic Names').nunique().reset_index()
+            fig, ax = plt.subplots() #solved by add this line 
+            ax = sns.barplot(data=chart5, x='Patient ID', y='Patient Clinic Names', orient='h')
+            ticks = np.arange(0, chart5['Patient ID'].max()+1, 1).tolist()
+            plt.title("# Patients w/ Initial Visit in Last 30 Days by Clinic")
+            plt.xlabel("# Patients")
+            plt.ylabel("Clinic")
+            plt.xticks(ticks)
+            ax.bar_label(ax.containers[0], label_type='center')
+            st.pyplot(fig)
+        except:
+            st.write("No data for this chart")
 
 
 
