@@ -49,3 +49,37 @@ with st.container():
         ax = sns.barplot(data=chart1, x='Patient ID', y='Current Care Coordinator', orient='h')
         ax.bar_label(ax.containers[0], label_type='center')
         st.pyplot(fig)
+
+        st.header("Days Enrolled by Care Coordinator") 
+        chart3 = patient[patient['Currently Active']==1].copy()
+
+        # Ensuring 'Most Recent Randomization Date' is datetime and filling missing values if any
+        chart3['Most Recent Randomization Date'] = chart3['Most Recent Randomization Date'].astype('datetime64').fillna(method='ffill')
+
+        # Ensuring no duplicates in merge DataFrame
+        chart3e = merge.drop_duplicates(subset='Patient ID', keep='first').copy()
+
+        # Defining 'today' variable if not defined
+        try:
+            today_date
+        except NameError:
+            today_date = pd.to_datetime("today")
+
+        chart3e['today'] = today_date
+        chart3e['today'] = chart3e['today'].astype('datetime64')
+
+        # Merging on 'Patient ID' with check for non-unique keys
+        if chart3['Patient ID'].is_unique and chart3e['Patient ID'].is_unique:
+            chart3 = pd.merge(chart3, chart3e, on='Patient ID')
+        else:
+            st.error("Patient ID in either chart3 or chart3e is not unique. Please check your data.")
+
+        chart3['# Days Enrolled'] = (chart3['today'] - chart3['Most Recent Randomization Date']).dt.days
+        chart3 = chart3.groupby('Current Care Coordinator')['# Days Enrolled'].median().reset_index()
+        chart3.columns = ['Current Care Coordinator', '# Days Enrolled (median)']
+
+        fig, ax = plt.subplots()
+        ax = sns.barplot(data=chart3, x='# Days Enrolled (median)', y='Current Care Coordinator', orient='h')
+        ax.bar_label(ax.containers[0], label_type='center')
+        st.pyplot(fig)
+
