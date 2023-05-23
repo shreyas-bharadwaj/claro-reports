@@ -65,3 +65,54 @@ with st.container():
         ax = sns.barplot(data=chart3, x='# Days Enrolled (median)', y='Current Care Coordinator', orient='h')
         ax.bar_label(ax.containers[0], label_type='center')
         st.pyplot(fig)
+
+    cols_patient = ['Patient ID', 'Current Care Coordinator', 'Currently Active', 'Current Primary Clinic']
+    patient = pd.read_csv("./data/patient.csv", usecols=cols_patient)
+
+    cols_contact_note = ['Patient ID', 'Contact Type', 'Contact Date', 'Patient Clinic Names', 'Provider Organization Names']
+    contact_note = pd.read_csv("./data/contact_note.csv", usecols=cols_contact_note)
+
+    with col2:
+        # second chart
+        chart1 = patient[(patient['Currently Active']==1) & (patient['Current Primary Clinic'].isin(clinics))]
+        chart1 = chart1['Current Primary Clinic'].value_counts().reset_index()
+        chart1.columns = ['Current Primary Clinic', 'Patient ID']
+        chart1 = chart1.sort_values(by='Patient ID', ascending=False)
+        fig, ax = plt.subplots()
+        ax = sns.barplot(data=chart1, x='Patient ID', y='Current Primary Clinic', orient='h')
+        ax.bar_label(ax.containers[0], label_type='center')
+        st.pyplot(fig)
+
+        # fourth chart
+        chart4 = contact_note[contact_note['Contact Type']=='I/A'].copy()
+        chart4['Contact Date'] = chart4['Contact Date'].astype('datetime64')
+        chart4e = org_names_filtered.copy()
+        chart4e['Randomization Date'] = chart4e['Randomization Date'].astype('datetime64')
+        chart4 = pd.merge(chart4, chart4e, on='Patient ID')
+        chart4['# Days to Initial Visit (median)'] = (chart4['Contact Date'] - chart4['Randomization Date']).dt.days
+        chart4 = chart4.groupby('Patient Clinic Names')['# Days to Initial Visit (median)'].median().reset_index()
+        fig, ax = plt.subplots()
+        ax = sns.barplot(data=chart4, x='# Days to Initial Visit (median)', y='Patient Clinic Names', orient='h')
+        plt.title("# of Days to Initial Visit (median) by Clinic")
+        plt.xlabel("# Days (median)")
+        plt.ylabel("Clinic")
+        plt.axvline(7)
+        ax.bar_label(ax.containers[0], label_type='center')
+        st.pyplot(fig)
+
+        # fifth chart
+        chart5 = contact_note[contact_note['Contact Type']=='I/A'].copy()
+        chart5['Contact Date'] = chart5['Contact Date'].astype('datetime64')
+        chart5['30 Days Ago'] = today_date - pd.Timedelta(days=31)
+        chart5 = chart5[chart5['Provider Organization Names']==site_name]
+        chart5 = chart5[chart5['Contact Date']>=chart5['30 Days Ago']]
+        chart5 = chart5.groupby('Patient Clinic Names')['Patient ID'].nunique().reset_index()
+        fig, ax = plt.subplots()
+        ax = sns.barplot(data=chart5, x='Patient ID', y='Patient Clinic Names', orient='h')
+        ticks = np.arange(0, chart5['Patient ID'].max()+1, 1).tolist()
+        plt.title("# Patients w/ Initial Visit in Last 30 Days by Clinic")
+        plt.xlabel("# Patients")
+        plt.ylabel("Clinic")
+        plt.xticks(ticks)
+        ax.bar_label(ax.containers[0], label_type='center')
+        st.pyplot(fig)
