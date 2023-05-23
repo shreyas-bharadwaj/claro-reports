@@ -49,18 +49,3 @@ with st.container():
         ax = sns.barplot(data=chart1, x='Patient ID', y='Current Care Coordinator', orient='h')
         ax.bar_label(ax.containers[0], label_type='center')
         st.pyplot(fig)
-
-        #third chart 
-        chart3 = patient[patient['Currently Active']==1].copy()
-        chart3['Most Recent Randomization Date'] = chart3['Most Recent Randomization Date'].astype('datetime64')
-        chart3e = merge.copy()
-        chart3e['today'] = today_date
-        chart3e['today'] = chart3e['today'].astype('datetime64')
-        chart3 = pd.merge(chart3, chart3e, on='Patient ID')
-        chart3['# Days Enrolled'] = (chart3['today'] - chart3['Most Recent Randomization Date']).dt.days
-        chart3 = chart3.groupby('Current Care Coordinator')['# Days Enrolled'].median().reset_index()
-        chart3.columns = ['Current Care Coordinator', '# Days Enrolled (median)']
-        fig, ax = plt.subplots()
-        ax = sns.barplot(data=chart3, x='# Days Enrolled (median)', y='Current Care Coordinator', orient='h')
-        ax.bar_label(ax.containers[0], label_type='center')
-        st.pyplot(fig)
