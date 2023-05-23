@@ -50,30 +50,18 @@ with st.container():
         ax.bar_label(ax.containers[0], label_type='center')
         st.pyplot(fig)
 
-
-        st.header("Days Enrolled by Care Coordinator") 
-        chart3 = patient[patient['Currently Active']==1].copy()
-
-        # Ensuring 'Most Recent Randomization Date' is datetime and filling missing values if any
-        chart3['Most Recent Randomization Date'] = chart3['Most Recent Randomization Date'].astype('datetime64').fillna(method='ffill')
-
-        # Directly adding 'today' column to chart3 DataFrame
-        chart3['today'] = pd.to_datetime("today")
-
-        # Merging with 'merge' DataFrame, assuming 'merge' DataFrame exists and is correctly formatted
-        if chart3['Patient ID'].is_unique and merge['Patient ID'].is_unique:
-            chart3 = pd.merge(chart3, merge, on='Patient ID', how='inner')
-        else:
-            st.error("Patient ID in either chart3 or merge is not unique. Please check your data.")
-
-        # Calculation for '# Days Enrolled'
+        chart3 = patient[['Patient ID', 'Current Care Coordinator', 'Most Recent Randomization Date', 'Currently Active']]
+        chart3 = chart3[chart3['Currently Active']==1]
+        chart3['Most Recent Randomization Date'] = chart3['Most Recent Randomization Date'].astype('datetime64')
+        chart3e = episode[['Patient ID', 'Organization Name']]
+        chart3e = chart3e[chart3e['Organization Name']==site_name]
+        chart3e['today'] = pd.to_datetime('today').date()
+        chart3e['today'] = chart3e['today'].astype('datetime64')
+        chart3 = pd.merge(chart3, chart3e, how='inner', on='Patient ID')
         chart3['# Days Enrolled'] = (chart3['today'] - chart3['Most Recent Randomization Date']).dt.days
-
-        chart3 = chart3.groupby('Current Care Coordinator')['# Days Enrolled'].median().reset_index()
-        chart3.columns = ['Current Care Coordinator', '# Days Enrolled (median)']
-
-        fig, ax = plt.subplots()
+        chart3 = chart3[['Current Care Coordinator', '# Days Enrolled']].groupby('Current Care Coordinator').median().reset_index()
+        chart3['# Days Enrolled (median)'] = chart3['# Days Enrolled']
+        fig, ax = plt.subplots() #solved by add this line 
         ax = sns.barplot(data=chart3, x='# Days Enrolled (median)', y='Current Care Coordinator', orient='h')
         ax.bar_label(ax.containers[0], label_type='center')
         st.pyplot(fig)
-
