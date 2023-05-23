@@ -57,29 +57,18 @@ with st.container():
         # Ensuring 'Most Recent Randomization Date' is datetime and filling missing values if any
         chart3['Most Recent Randomization Date'] = chart3['Most Recent Randomization Date'].astype('datetime64').fillna(method='ffill')
 
-        # Ensuring no duplicates in merge DataFrame
-        chart3e = merge.drop_duplicates(subset='Patient ID', keep='first').copy()
+        # Directly adding 'today' column to chart3 DataFrame
+        chart3['today'] = pd.to_datetime("today")
 
-        # Defining 'today' variable if not defined
-        try:
-            today_date
-        except NameError:
-            today_date = pd.to_datetime("today")
-
-        chart3e['today'] = today_date
-        chart3e['today'] = chart3e['today'].astype('datetime64')
-
-        # Merging on 'Patient ID' with check for non-unique keys
-        if chart3['Patient ID'].is_unique and chart3e['Patient ID'].is_unique:
-            chart3 = pd.merge(chart3, chart3e, on='Patient ID', how='inner')
+        # Merging with 'merge' DataFrame, assuming 'merge' DataFrame exists and is correctly formatted
+        if chart3['Patient ID'].is_unique and merge['Patient ID'].is_unique:
+            chart3 = pd.merge(chart3, merge, on='Patient ID', how='inner')
         else:
-            st.error("Patient ID in either chart3 or chart3e is not unique. Please check your data.")
+            st.error("Patient ID in either chart3 or merge is not unique. Please check your data.")
 
-        # Ensure 'today' column is in chart3 DataFrame after merge
-        if 'today' not in chart3.columns:
-            st.error("'today' column is missing after merge. Please check your data.")
-
+        # Calculation for '# Days Enrolled'
         chart3['# Days Enrolled'] = (chart3['today'] - chart3['Most Recent Randomization Date']).dt.days
+
         chart3 = chart3.groupby('Current Care Coordinator')['# Days Enrolled'].median().reset_index()
         chart3.columns = ['Current Care Coordinator', '# Days Enrolled (median)']
 
