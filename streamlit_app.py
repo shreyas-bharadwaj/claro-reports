@@ -50,6 +50,7 @@ with st.container():
         ax.bar_label(ax.containers[0], label_type='center')
         st.pyplot(fig)
 
+
         st.header("Days Enrolled by Care Coordinator") 
         chart3 = patient[patient['Currently Active']==1].copy()
 
@@ -70,9 +71,13 @@ with st.container():
 
         # Merging on 'Patient ID' with check for non-unique keys
         if chart3['Patient ID'].is_unique and chart3e['Patient ID'].is_unique:
-            chart3 = pd.merge(chart3, chart3e, on='Patient ID')
+            chart3 = pd.merge(chart3, chart3e, on='Patient ID', how='inner')
         else:
             st.error("Patient ID in either chart3 or chart3e is not unique. Please check your data.")
+
+        # Ensure 'today' column is in chart3 DataFrame after merge
+        if 'today' not in chart3.columns:
+            st.error("'today' column is missing after merge. Please check your data.")
 
         chart3['# Days Enrolled'] = (chart3['today'] - chart3['Most Recent Randomization Date']).dt.days
         chart3 = chart3.groupby('Current Care Coordinator')['# Days Enrolled'].median().reset_index()
