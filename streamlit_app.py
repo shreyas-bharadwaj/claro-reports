@@ -59,7 +59,8 @@ with st.container():
             ax = sns.barplot(data=chart1, x='Patient ID', y='Current Care Coordinator', orient='h')
             ax.bar_label(ax.containers[0], label_type='center')
             st.pyplot(fig)
-    except:
+    except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+        print(f"An error occurred: {e}")  # Printing the error
         st.write("No data for 'Patient Count by CC' and 'Days Enrolled (median) by CC', charts unable to render")
 
         #third chart 
@@ -79,7 +80,8 @@ with st.container():
         ax = sns.barplot(data=chart3, x='# Days Enrolled (median)', y='Current Care Coordinator', orient='h')
         ax.bar_label(ax.containers[0], label_type='center')
         st.pyplot(fig)
-    except:
+    except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+        print(f"An error occurred: {e}")  # Printing the error
         st.write("No data for 'Patient Count by CC' and 'Days Enrolled (median) by CC', charts unable to render")
 
     #second chart patient count by Clinic Name
@@ -94,7 +96,8 @@ with st.container():
             ax = sns.barplot(data=chart1, x='Patient ID', y='Current Primary Clinic', orient='h')
             ax.bar_label(ax.containers[0], label_type='center')
             st.pyplot(fig)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Patient Count by Clinic' and 'Days Enrolled (median) by Clinic', charts unable to render")
 
 
@@ -121,7 +124,8 @@ with st.container():
             plt.axvline(7)
             ax.bar_label(ax.containers[0], label_type='center')
             st.pyplot(fig)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Patient Count by Clinic' and 'Days Enrolled (median) by Clinic', charts unable to render")
 
         #chart 5: number of patients who had an intiation visit within the last 30 days
@@ -142,7 +146,8 @@ with st.container():
             plt.xticks(ticks)
             ax.bar_label(ax.containers[0], label_type='center')
             st.pyplot(fig)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Number of Patients Who Had an Initiation Visit Within the Last 30 Days', chart unable to render")
 
 
@@ -160,7 +165,8 @@ try:
     chart7 = pd.merge(chart7, chart7p, on='Patient ID', how='inner')
     chart7['Days Since Last CC Visit'] = (chart7['Today'] - chart7['Last Care Coordinator Encounter Date']).dt.days
     chart7['Days Since Randomized'] = (chart7['Today'] - chart7['Most Recent Randomization Date']).dt.days
-except:
+except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+    print(f"An error occurred: {e}")  # Printing the error
     st.write("No data for 'Patient Engagement Status By Clinic', chart unable to render")
 
 def genStatus(df):
@@ -205,7 +211,8 @@ with st.container():
             chart7plot.columns = chart7plot.columns.to_flat_index().str.join('_')
             chart7plot = chart7plot.rename(columns={'Patient ID_Difficult to Engage':'Unable to Make Initial Contact', 'Patient ID_Engaged':'Engaged','Patient ID_Not Engaged':'Not Engaged', 'Patient ID_Recently Enrolled':'Recently Enrolled'})
             st.bar_chart(chart7plot, height=400)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Patient Engagement Status By Clinic', chart unable to render")
     with cole2:
         try:
@@ -247,7 +254,8 @@ with st.container():
             ax.bar_label(ax.containers[0], label_type='center')
             # ax.bar_label(ax.containers[1], label_type='center')
             st.pyplot(fig)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Days Since Last CC Visit', chart unable to render")
 
 with st.container():
@@ -299,7 +307,8 @@ with st.container():
             )
         
         st.altair_chart(alt.layer(bars, data=final).resolve_scale(color='independent').properties(height=525), use_container_width=True)
-    except:
+    except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+        print(f"An error occurred: {e}")  # Printing the error
         st.write("No data for 'MOUD Status By Clinic', chart unable to render")
 
 with st.container():
@@ -350,7 +359,8 @@ with st.container():
         y='Current Primary Clinic',
         color='Med Status'
         )
-    except:
+    except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+        print(f"An error occurred: {e}")  # Printing the error
         st.write("No data for 'Psychotropic Medication Status', chart unable to render")
     
         
@@ -358,13 +368,15 @@ with st.container():
         try:
             st.subheader("Proportion of MDD Patients by MH Rx Status")
             st.altair_chart((bars_mdd).properties(height=300),use_container_width=True)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Psychotropic Medication Status', chart unable to render")
     with col2:
         try:
             st.subheader("Proportion of PTSD Patients by MH Rx Status")
             st.altair_chart((bars_ptsd).properties(height=300),use_container_width=True)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Psychotropic Medication Status', chart unable to render")
 
 
@@ -449,7 +461,8 @@ with st.container():
             st.altair_chart((bars).properties(
         height=525
     ), use_container_width=True)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Psychotherapy Status By Clinic', chart unable to render")
 
 
@@ -477,5 +490,6 @@ with st.container():
             plt.ylabel("Clinic")
             ax.bar_label(ax.containers[0], label_type='center')
             st.pyplot(fig)
-        except:
+        except Exception as e:  # Catching all exceptions and aliasing it as 'e'
+            print(f"An error occurred: {e}")  # Printing the error
             st.write("No data for 'Median Days to First BHP Visit by Clinic', chart unable to render")
