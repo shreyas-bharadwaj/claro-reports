@@ -67,11 +67,11 @@ with st.container():
     try:
         chart3 = patient[['Patient ID', 'Current Care Coordinator', 'Most Recent Randomization Date', 'Currently Active']]
         chart3 = chart3[chart3['Currently Active']==1]
-        chart3['Most Recent Randomization Date'] = chart3['Most Recent Randomization Date'].astype('datetime64')
+        chart3['Most Recent Randomization Date'] = chart3['Most Recent Randomization Date'].astype('datetime64[D]')
         chart3e = episode[['Patient ID', 'Organization Name']]
         chart3e = chart3e[chart3e['Organization Name']==site_name]
         chart3e['today'] = pd.to_datetime('today').date()
-        chart3e['today'] = chart3e['today'].astype('datetime64')
+        chart3e['today'] = chart3e['today'].astype('datetime64[D]')
         chart3 = pd.merge(chart3, chart3e, how='inner', on='Patient ID')
         chart3['# Days Enrolled'] = (chart3['today'] - chart3['Most Recent Randomization Date']).dt.days
         chart3 = chart3[['Current Care Coordinator', '# Days Enrolled']].groupby('Current Care Coordinator').median().reset_index()
@@ -105,11 +105,11 @@ with st.container():
         #fourth chart #days to first visit (median) by Clinic 
         try:
             chart4 = contact_note[['Patient ID', 'Contact Type', 'Contact Date', 'Patient Clinic Names']]
-            chart4['Contact Date'] = chart4['Contact Date'].astype('datetime64')
+            chart4['Contact Date'] = chart4['Contact Date'].astype('datetime64[D]')
             chart4 = chart4[chart4['Contact Type']=='I/A']
             chart4e = episode[['Patient ID', 'Organization Name', 'Randomization Date']]
             chart4e = chart4e[chart4e['Organization Name']==site_name]
-            chart4e['Randomization Date'] = chart4e['Randomization Date'].astype('datetime64')
+            chart4e['Randomization Date'] = chart4e['Randomization Date'].astype('datetime64[D]')
             chart4p = patient[['Patient ID', 'Current Primary Clinic', 'Currently Active']]
             chart4p = chart4p[chart4p['Currently Active']==1]
             chart4 = pd.merge(chart4, chart4e, how='inner', on='Patient ID')
@@ -131,7 +131,7 @@ with st.container():
         #chart 5: number of patients who had an intiation visit within the last 30 days
         try:
             chart5 = contact_note[['Patient ID', 'Contact Type', 'Contact Date', 'Patient Clinic Names', 'Provider Organization Names']]
-            chart5['Contact Date'] = chart5['Contact Date'].astype('datetime64')
+            chart5['Contact Date'] = chart5['Contact Date'].astype('datetime64[D]')
             chart5=chart5[chart5['Contact Type']=='I/A']
             chart5['30 Days Ago'] = pd.to_datetime('today').date()-pd.Timedelta(days=31)
             chart5 = chart5[chart5['Provider Organization Names']==site_name]
@@ -157,10 +157,10 @@ try:
     chart7 = episode[['Patient ID', 'Care Coordinator Initial Encounter Date', '# Care Coordinator Encounter', 'Organization Name', 'Last Care Coordinator Encounter Date']]
     chart7 = chart7[chart7['Organization Name']==site_name]
     chart7['Today'] =  pd.to_datetime('today').date()
-    chart7['Today'] = chart7['Today'].astype('datetime64')
-    chart7['Last Care Coordinator Encounter Date'] = chart7['Last Care Coordinator Encounter Date'].astype('datetime64')
+    chart7['Today'] = chart7['Today'].astype('datetime64[D]')
+    chart7['Last Care Coordinator Encounter Date'] = chart7['Last Care Coordinator Encounter Date'].astype('datetime64[D]')
     chart7p = patient[['Patient ID','Most Recent Randomization Date','Currently Active', 'Current Primary Clinic']]
-    chart7p['Most Recent Randomization Date'] = chart7p['Most Recent Randomization Date'].astype('datetime64')
+    chart7p['Most Recent Randomization Date'] = chart7p['Most Recent Randomization Date'].astype('datetime64[D]')
 
     chart7 = pd.merge(chart7, chart7p, on='Patient ID', how='inner')
     chart7['Days Since Last CC Visit'] = (chart7['Today'] - chart7['Last Care Coordinator Encounter Date']).dt.days
@@ -218,7 +218,7 @@ with st.container():
         try:
         #chart 8: days since last CC Visit
             chart8 = contact_note[['Patient ID', 'Contact Type', 'Contact Date', 'Patient Clinic Names', 'Provider Organization Names']]
-            chart8['Contact Date'] = chart8['Contact Date'].astype('datetime64')
+            chart8['Contact Date'] = chart8['Contact Date'].astype('datetime64[D]')
             chart8=chart8[chart8['Contact Type'].isin(['I/A','F/U'])]
             chart8 = chart8[chart8['Patient Clinic Names'].isin(clinics)]
             chart8p = patient[['Patient ID', 'Currently Active']]
@@ -230,8 +230,8 @@ with st.container():
             chart8r = episode[['Patient ID', 'Randomization Date']]
             chart8 = pd.merge(chart8, chart8r, on='Patient ID', how='inner')
             chart8['Today'] = pd.to_datetime('today').date()
-            chart8['Randomization Date'] = chart8['Randomization Date'].astype('datetime64')
-            chart8['Today'] = chart8['Today'].astype('datetime64')
+            chart8['Randomization Date'] = chart8['Randomization Date'].astype('datetime64[D]')
+            chart8['Today'] = chart8['Today'].astype('datetime64[D]')
             chart8['delta'] = (chart8['Today']-chart8['Contact Date']).dt.days
             merger = pd.DataFrame(chart8.groupby('Patient ID')['Contact Date'].max())
             x = pd.merge(chart8,merger,on='Patient ID',how='inner')
@@ -266,9 +266,9 @@ with st.container():
         chart9c['Days of Med']  = (chart9c['Medication for OUD - Days Prescribed'] * chart9c['Medication for OUD - Number of Refills'])+chart9c['Medication for OUD - Days Prescribed']
         def genMedStatus(df):
             df['Today'] = pd.to_datetime('today').date()
-            df['Today'] = df['Today'].astype('datetime64')
+            df['Today'] = df['Today'].astype('datetime64[D][D]')
             df['Days of Med'] = df['Days of Med'].fillna(value=0)
-            df['Contact Date'] = df['Contact Date'].astype('datetime64')
+            df['Contact Date'] = df['Contact Date'].astype('datetime64[D]')
             for index, row in df.iterrows():
                 df.loc[index,'Run out Date'] = df.loc[index,'Contact Date'] + timedelta(days=df.loc[index,'Days of Med'])
                 if df.loc[index,'Medication for OUD - Name']=='Methadone':
@@ -317,7 +317,7 @@ with st.container():
         col1, col2 = st.columns(2)
         chart11c = contact_note[['Patient ID','Contact Date','Contact Type', 'Current Medication 1', 'Current Medication 2']]
         chart11c = chart11c[chart11c['Contact Type'].isin(['I/A','F/U'])]
-        chart11c['Contact Date'] = chart11c['Contact Date'].astype('datetime64')
+        chart11c['Contact Date'] = chart11c['Contact Date'].astype('datetime64[D]')
         x = chart11c
         x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
 
@@ -391,8 +391,8 @@ with st.container():
             chart10c = chart10c[chart10c['Contact Type'].isin(['B/P'])]
             def genBHP(df):
                 df['Today'] = pd.to_datetime('today').date()
-                df['Today'] = df['Today'].astype('datetime64')
-                df['Contact Date'] = df['Contact Date'].astype('datetime64')
+                df['Today'] = df['Today'].astype('datetime64[D]')
+                df['Contact Date'] = df['Contact Date'].astype('datetime64[D]')
                 df['BHP Status'] = df['Provider Name'].apply(lambda x: 'Healthy Families' if 'healthy' in str(x).lower() else x)
                 for index, row in df.iterrows():
                     df.loc[index,'Days Since BHP'] = (df.loc[index,'Today'] - df.loc[index,'Contact Date']).days
@@ -471,7 +471,7 @@ with st.container():
         try:
             #chart 6 median days to first bhp visit by clinic
             chart6 = contact_note[['Patient ID', 'Contact Type', 'Contact Date', 'Patient Clinic Names', 'Provider Organization Names']]
-            chart6['Contact Date'] = chart6['Contact Date'].astype('datetime64')
+            chart6['Contact Date'] = chart6['Contact Date'].astype('datetime64[D]')
             chart6=chart6[chart6['Contact Type']=='B/P']
             chart6 = chart6[chart6['Patient Clinic Names'].isin(clinics)]
             chart6p = patient[['Patient ID', 'Currently Active']]
@@ -480,7 +480,7 @@ with st.container():
             chart6r = episode[['Patient ID', 'Randomization Date']]
             chart6 = pd.merge(chart6, chart6r, on='Patient ID', how='inner')
             chart6 = chart6.sort_values(by=['Patient ID', 'Contact Date'], ascending=True).drop_duplicates(subset='Patient ID', keep='first')
-            chart6['Randomization Date'] = chart6['Randomization Date'].astype('datetime64')
+            chart6['Randomization Date'] = chart6['Randomization Date'].astype('datetime64[D]')
             chart6['delta'] = (chart6['Contact Date'] - chart6['Randomization Date']).dt.days
             chart6 = pd.DataFrame(chart6.groupby('Patient Clinic Names')['delta'].median()).reset_index()
             fig, ax = plt.subplots() #solved by add this line 
