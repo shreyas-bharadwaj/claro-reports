@@ -266,7 +266,7 @@ with st.container():
         chart9c['Days of Med']  = (chart9c['Medication for OUD - Days Prescribed'] * chart9c['Medication for OUD - Number of Refills'])+chart9c['Medication for OUD - Days Prescribed']
         def genMedStatus(df):
             df['Today'] = pd.to_datetime('today').date()
-            df['Today'] = df['Today'].astype('datetime64[D][D]')
+            df['Today'] = df['Today'].astype('datetime64[D]')
             df['Days of Med'] = df['Days of Med'].fillna(value=0)
             df['Contact Date'] = df['Contact Date'].astype('datetime64[D]')
             for index, row in df.iterrows():
