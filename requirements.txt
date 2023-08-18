@@ -1,7 +1,7 @@
-altair
-pandas
-streamlit
-matplotlib
-seaborn
-datetime
+altair==4.2.0
+matplotlib==3.4.0
 numpy
+pandas==1.2.4
+seaborn
+streamlit==1.8.1
+datetime
