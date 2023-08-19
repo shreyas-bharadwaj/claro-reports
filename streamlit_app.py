@@ -17,7 +17,7 @@ option = st.selectbox('Select an Organization', episode[~episode['Organization N
 
 site_name = option
 clinics = episode[episode['Organization Name']==site_name]['Clinic Name'].unique()
-st.header("CLARO Site Report | Version 2.0") 
+st.header("CLARO Site Report | Version 2.1") 
 st.subheader("data current as of {}".format(pd.to_datetime('today').date()))
 
 with st.container():
