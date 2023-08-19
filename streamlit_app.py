@@ -6,6 +6,9 @@ import numpy as np
 from datetime import timedelta
 import altair as alt
 import os
+import warnings
+
+warnings.filterwarnings('ignore')
 
 os.environ['NUMEXPR_MAX_THREADS'] = '8'
 
@@ -206,7 +209,7 @@ def genEngagement(df):
 
 def genMedStatus(df):
     # Convert dates and fill NA values
-    df['Today'] = pd.to_datetime('today').date().astype('datetime64[D]')
+    df['Today'] = pd.to_datetime(pd.to_datetime('today').date())
     df['Days of Med'] = df['Days of Med'].fillna(0)
     df['Contact Date'] = pd.to_datetime(df['Contact Date']).dt.date.astype('datetime64[D]')
     
@@ -214,12 +217,13 @@ def genMedStatus(df):
     df['Run out Date'] = df['Contact Date'] + pd.to_timedelta(df['Days of Med'], unit='D')
     
     # Determine medication status based on conditions
-    df['Med Status'] = 'Unknown'
+    df['Med Status'] = 'Unknown' # Default value
     df.loc[df['Medication for OUD - Name'] == 'Methadone', 'Med Status'] = 'Methadone'
-    df.loc[df['Run out Date'] < df['Today'], 'Med Status'] = 'Flagged for CC Review'
-    df.loc[df['Run out Date'] >= df['Today'], 'Med Status'] = 'Active'
+    df.loc[(df['Run out Date'] < df['Today']) & (df['Medication for OUD - Name'] != 'Methadone'), 'Med Status'] = 'Flagged for CC Review'
+    df.loc[(df['Run out Date'] >= df['Today']) & (df['Medication for OUD - Name'] != 'Methadone'), 'Med Status'] = 'Active'
     
     return df
+
 
 def genMaint(df):
     # Fill NaN values with 0
@@ -323,22 +327,6 @@ with st.container():
         chart9c = contact_note[['Patient ID','Medication for OUD - Name','Medication for OUD - Days Prescribed','Medication for OUD - Number of Refills','Medication for OUD - Frequency','Contact Date','Contact Type']]
         chart9c = chart9c[chart9c['Contact Type'].isin(['X/X','P/E'])]
         chart9c['Days of Med']  = (chart9c['Medication for OUD - Days Prescribed'] * chart9c['Medication for OUD - Number of Refills'])+chart9c['Medication for OUD - Days Prescribed']
-        def genMedStatus(df):
-            df['Today'] = pd.to_datetime('today').date()
-            df['Today'] = df['Today'].astype('datetime64[D]')
-            df['Days of Med'] = df['Days of Med'].fillna(value=0)
-            df['Contact Date'] = df['Contact Date'].astype('datetime64[D]')
-            for index, row in df.iterrows():
-                df.loc[index,'Run out Date'] = df.loc[index,'Contact Date'] + timedelta(days=df.loc[index,'Days of Med'])
-                if df.loc[index,'Medication for OUD - Name']=='Methadone':
-                    df.loc[index,'Med Status'] = 'Methadone'
-                elif df.loc[index,'Run out Date'] < df.loc[index,'Today']:
-                    df.loc[index, 'Med Status'] = 'Flagged for CC Review'
-                elif df.loc[index, 'Run out Date'] >= df.loc[index,'Today']:
-                    df.loc[index,'Med Status'] = 'Active'
-                else:
-                    df.loc[index,'Med Status'] = 'Unknown'
-            return df
         x = genMedStatus(chart9c)
         x = x.sort_values(by='Contact Date', ascending=False).drop_duplicates(subset=['Patient ID'], keep='first')
         p = patient[['Patient ID','Currently Active','Current Primary Clinic']]
@@ -367,7 +355,7 @@ with st.container():
         
         st.altair_chart(alt.layer(bars, data=final).resolve_scale(color='independent').properties(height=525), use_container_width=True)
     except Exception as e:  # Catching all exceptions and aliasing it as 'e'
-        print(f"An error occurred: {e}")  # Printing the error
+        print(f"An error occurred at 9c {e}")  # Printing the error
         st.write("No data for 'MOUD Status By Clinic', chart unable to render")
 
 with st.container():
