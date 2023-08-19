@@ -12,11 +12,20 @@ episode = pd.read_csv("./data/episode.csv")
 contact_note = pd.read_csv("./data/contact_note.csv")
 agencies = pd.read_csv('./data/agencies.csv')
 
-#selector
-option = st.selectbox('Select an Organization', episode[~episode['Organization Name'].isin(['Hidalgo Medical Services', 'University of New Mexico (Non-current)'])]['Organization Name'].unique())
+# Define columns; you can adjust the ratio to change the width
+col1, col2, col3 = st.columns(3)
+
+# Place the selector in the first column
+with col1:
+    st.image("./claro-logo.png", width=200)
+    option = st.selectbox(
+        'Select an Organization',
+        episode[~episode['Organization Name'].isin(['Hidalgo Medical Services', 'University of New Mexico (Non-current)'])]['Organization Name'].unique()
+    )
+    
 
 site_name = option
-clinics = episode[episode['Organization Name']==site_name]['Clinic Name'].unique()
+clinics = episode[episode['Organization Name'] == site_name]['Clinic Name'].unique()
 st.header("CLARO Site Report | Version 2.1") 
 st.subheader("data current as of {}".format(pd.to_datetime('today').date()))
 
