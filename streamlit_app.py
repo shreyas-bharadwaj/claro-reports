@@ -22,6 +22,8 @@ with col1:
         'Select an Organization',
         episode[~episode['Organization Name'].isin(['Hidalgo Medical Services', 'University of New Mexico (Non-current)'])]['Organization Name'].unique()
     )
+with col2:
+    st.image
     
 
 site_name = option
