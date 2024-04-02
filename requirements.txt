@@ -4,4 +4,4 @@ streamlit
 matplotlib
 seaborn
 datetime
-numpy
+numpy >=1.16.5, <1.23.0

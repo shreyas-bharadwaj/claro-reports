@@ -17,13 +17,12 @@ col1, col2, col3 = st.columns(3)
 
 # Place the selector in the first column
 with col1:
-    st.image("./claro-logo.png", width=200)
+    # st.image("./claro-logo.png", width=200)
     option = st.selectbox(
         'Select an Organization',
         episode[~episode['Organization Name'].isin(['Hidalgo Medical Services', 'University of New Mexico (Non-current)'])]['Organization Name'].unique()
     )
-with col2:
-    st.image
+   
     
 
 site_name = option
