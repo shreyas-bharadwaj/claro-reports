@@ -1,6 +1,6 @@
 altair
 pandas
-streamlit
+streamlit <=1.27.0
 matplotlib
 seaborn
 datetime
