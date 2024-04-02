@@ -35,47 +35,70 @@ with st.container():
 #first chart patient count by CC
     try:
         with col1:
-            chart1 = patient[['Patient ID', 'Current Care Coordinator', 'Currently Active']]
-            chart1['Current Care Coordinator'] = chart1['Current Care Coordinator'].apply(lambda x: x.split()[0])
-            chart1 = chart1[chart1['Currently Active']==1]
+            print(patient.columns)
+            print("Starting processing for chart1.")
+            chart1 = patient[['Patient ID', 'Current Care Coordinator(s)', 'Currently Active']]
+            print("Initial subset of patient data created.")
+    
+            chart1['Current Care Coordinator(s)'] = chart1['Current Care Coordinator(s)'].apply(lambda x: x.split()[0])
+            print("Care Coordinator names simplified.")
+            
+            chart1 = chart1[chart1['Currently Active'] == 1]
+            print("Filtered only currently active patients.")
+            
             merge = episode[['Patient ID', 'Organization Name']]
-            merge = merge[merge['Organization Name']==site_name]
+            print("Subset of episode data created.")
+            
+            merge = merge[merge['Organization Name'] == site_name]
+            print(f"Filtered episodes by the organization name: {site_name}.")
+    
             merge = pd.merge(chart1, merge, how='inner', on='Patient ID')
-            chart1 = pd.DataFrame(merge.groupby('Current Care Coordinator')['Patient ID'].count()).reset_index()
+            print("Merged chart1 and episode data on 'Patient ID'.")
+            
+            chart1 = pd.DataFrame(merge.groupby('Current Care Coordinator(s)')['Patient ID'].count()).reset_index()
+            print("Grouped data by 'Current Care Coordinator(s)' with patient count.")
+            
             chart1 = chart1.sort_values(by='Patient ID', ascending=False)
-            # ticks = np.arange(0, chart1['Patient ID'].max()+1, 3).tolist()
+            print("Sorted chart1 by patient count in descending order.")
+    
             max_value = chart1['Patient ID'].max()
             if pd.notna(max_value):
                 ticks = np.arange(0, max_value + 1, 3).tolist()
+                print("Ticks generated based on the max patient count.")
             else:
                 ticks = []  # or some default value that makes sense in your context
+                print("Max value not found or NaN, ticks set to empty.")
+            
             if chart1.empty:
-                print("The DataFrame chart1 is empty.")  # Or handle in a way that fits your application
+                print("The DataFrame chart1 is empty. No data to plot.")  # Or handle in a way that fits your application
             else:
-                if 'Patient ID' not in chart1 or 'Current Care Coordinator' not in chart1:
-                    print("Missing required columns.")  # Or handle as needed
+                if 'Patient ID' not in chart1 or 'Current Care Coordinator(s)' not in chart1:
+                    print("Missing required columns. Cannot proceed with plotting.")  # Or handle as needed
                 else:
-                        # Optionally, drop rows with NaN in the specified columns
-                    chart1 = chart1.dropna(subset=['Patient ID', 'Current Care Coordinator'])
+                    # Optionally, drop rows with NaN in the specified columns
+                    chart1 = chart1.dropna(subset=['Patient ID', 'Current Care Coordinator(s)'])
+                    print("Dropped NaN values from required columns.")
                     if chart1.empty:
-                        print("After dropping NaN values, chart1 is empty.")  # Handle as needed
+                        print("After dropping NaN values, chart1 is empty. No data to plot.")  # Handle as needed
                     else:
-                        ax = sns.barplot(data=chart1, x='Patient ID', y='Current Care Coordinator', orient='h')
-            fig, ax = plt.subplots() #solved by add this line 
-            plt.title("Caseload Size by CC")
-            plt.xlabel("# Patients")
-            plt.ylabel("CC")
-            plt.xticks(ticks)
-            ax = sns.barplot(data=chart1, x='Patient ID', y='Current Care Coordinator', orient='h')
-            ax.bar_label(ax.containers[0], label_type='center')
-            st.pyplot(fig)
+                        fig, ax = plt.subplots()
+                        plt.title("Caseload Size by CC")
+                        plt.xlabel("# Patients")
+                        plt.ylabel("CC")
+                        plt.xticks(ticks)
+                        ax = sns.barplot(data=chart1, x='Patient ID', y='Current Care Coordinator(s)', orient='h')
+                        ax.bar_label(ax.containers[0], label_type='center')
+                        print("Bar plot created.")
+                        st.pyplot(fig)
+                        print("Plot rendered successfully.")
     except Exception as e:  # Catching all exceptions and aliasing it as 'e'
-        print(f"An error occurred at chart 1 [Patient Count by CC]: {e}")  # Printing the error
+        print(f"An error occurred while processing chart 1 [Patient Count by CC]: {e}")  # Printing the error
         st.write("No data for 'Patient Count by CC' and 'Days Enrolled (median) by CC', charts unable to render")
+
 
         #third chart 
     try:
-        chart3 = patient[['Patient ID', 'Current Care Coordinator', 'Most Recent Randomization Date', 'Currently Active']]
+        chart3 = patient[['Patient ID', 'Current Care Coordinator(s)', 'Most Recent Randomization Date', 'Currently Active']]
         chart3 = chart3[chart3['Currently Active'] == 1]
         chart3['Most Recent Randomization Date'] = pd.to_datetime(chart3['Most Recent Randomization Date'])
 
@@ -85,10 +108,10 @@ with st.container():
 
         chart3 = pd.merge(chart3, chart3e, how='inner', on='Patient ID')
         chart3['# Days Enrolled'] = (chart3['today'] - chart3['Most Recent Randomization Date']).dt.days
-        chart3 = chart3[['Current Care Coordinator', '# Days Enrolled']].groupby('Current Care Coordinator').median().reset_index()
+        chart3 = chart3[['Current Care Coordinator(s)', '# Days Enrolled']].groupby('Current Care Coordinator(s)').median().reset_index()
         chart3['# Days Enrolled (median)'] = chart3['# Days Enrolled']
         fig, ax = plt.subplots()
-        ax = sns.barplot(data=chart3, x='# Days Enrolled (median)', y='Current Care Coordinator', orient='h')
+        ax = sns.barplot(data=chart3, x='# Days Enrolled (median)', y='Current Care Coordinator(s)', orient='h')
         ax.bar_label(ax.containers[0], label_type='center')
         st.pyplot(fig)
     except Exception as e:
@@ -99,7 +122,7 @@ with st.container():
     #second chart patient count by Clinic Name
     with col2:
         try:
-            chart1 = patient[['Patient ID', 'Current Care Coordinator', 'Currently Active', 'Current Primary Clinic']]
+            chart1 = patient[['Patient ID', 'Current Care Coordinator(s)', 'Currently Active', 'Current Primary Clinic']]
             chart1 = chart1[(chart1['Currently Active']==1) & (chart1['Current Primary Clinic'].isin(clinics))]
             merge = chart1
             chart1 = pd.DataFrame(merge.groupby('Current Primary Clinic')['Patient ID'].count()).reset_index()
@@ -322,9 +345,10 @@ with st.container():
 
 with st.container():
     try:
+        print(contact_note.columns)
         st.header("Psychotropic Medication Status") 
         col1, col2 = st.columns(2)
-        chart11c = contact_note[['Patient ID','Contact Date','Contact Type', 'Current Medication 1', 'Current Medication 2']]
+        chart11c = contact_note[['Patient ID','Contact Date','Contact Type', 'Psychotropic Medication 1']]
         chart11c = chart11c[chart11c['Contact Type'].isin(['I/A','F/U'])]
         chart11c['Contact Date'] = pd.to_datetime(chart11c['Contact Date'])  # Converting 'Contact Date' to datetime
         x = chart11c
@@ -343,7 +367,7 @@ with st.container():
         def genMaint(df):
             df = df.fillna(value=0)
             for index, row in df.iterrows():
-                if df.loc[index,'Current Medication 1'] != 0:
+                if df.loc[index,'Psychotropic Medication 1'] != 0:
                     df.loc[index,'Med Status']='Maintained'
                 else:
                     df.loc[index, 'Med Status']='Not Maintained'
